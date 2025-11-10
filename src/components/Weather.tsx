@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from "react";
 
+// Véletlenszerű pozíciókat generál a megadott sávokban.
+// @param numberOfDrops - Hány elemet generáljon.
+// @param bands - Az X koordináta sávjai (pl. { minLeft: 10, maxLeft: 25 }).
+// @param minDuration - Minimális animációs idő (másodperc).
+// @param maxDuration - Maximális animációs idő (másodperc).
+
 type WeatherData = {
   location: {
     name: string;
@@ -24,25 +30,87 @@ type WeatherData = {
 export default function Weather() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  async function fetchWeather(city = "Budapest") {
+  async function fetchWeather(location: string | null) {
     try {
-      const res = await fetch(
-        `https://api.weatherapi.com/v1/current.json?key=${
-          import.meta.env.VITE_WEATHER_API_KEY
-        }&q=${city}&aqi=no`
-      );
-      if (!res.ok) throw new Error("API error");
-      const data = await res.json();
-      setWeather(data);
+      setError(null);
+      if (location) {
+        const res = await fetch(
+          `https://api.weatherapi.com/v1/current.json?key=${
+            import.meta.env.VITE_WEATHER_API_KEY
+          }&q=${location}&aqi=no`
+        );
+        if (!res.ok) throw new Error("API error");
+        const data = await res.json();
+        setWeather(data);
+      }
     } catch (err) {
       setError("Nem sikerült lekérni az időjárást.");
+    } finally {
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    fetchWeather();
+    // felhasználó helye
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+
+          fetchWeather(`${latitude},${longitude}`);
+        },
+        (err) => {
+          // Hiba történt a geolokáció során
+          console.error("Geolocation error:", err);
+          setError(
+            "Nem sikerült meghatározni a helyet. Kérlek engedélyezd a helymeghatározást."
+          );
+          setLoading(false);
+        }
+      );
+    } else {
+      // A böngésző nem támogatja a geolokációt
+      setError("A böngésződ nem támogatja a helymeghatározást.");
+      setLoading(false);
+    }
   }, []);
+
+  const generateRandomPositions = (
+    numberOfDrops: number,
+    bands: { minLeft: number; maxLeft: number }[],
+    minDuration: number,
+    maxDuration: number
+  ) => {
+    const positions = [];
+
+    for (let i = 0; i < numberOfDrops; i++) {
+      // Véletlenszerű sáv kiválasztása
+      const randomBand = bands[Math.floor(Math.random() * bands.length)];
+
+      // Véletlenszerű 'left' érték generálása a sávban
+      const randomLeftPercent =
+        Math.floor(
+          Math.random() * (randomBand.maxLeft - randomBand.minLeft + 1)
+        ) + randomBand.minLeft;
+
+      // Véletlenszerű 'delay' 0 és 2.0 másodperc között
+      const randomDelay = (Math.random() * 2.0).toFixed(1) + "s";
+
+      // Véletlenszerű 'duration' a megadott tartományban
+      const randomDuration =
+        (Math.random() * (maxDuration - minDuration) + minDuration).toFixed(1) +
+        "s";
+
+      positions.push({
+        left: `left-[${randomLeftPercent}%]`,
+        delay: randomDelay,
+        duration: randomDuration,
+      });
+    }
+    return positions;
+  };
 
   // Gradiens háttér kiválasztása
   // Gradiens háttér kiválasztása
@@ -116,26 +184,58 @@ export default function Weather() {
       text.includes("showers") ||
       text.includes("thunder")
     ) {
+      // Nagy felhők
+      const clouds = [
+        { top: "top-0", left: "left-[10%]", size: "text-[300px]", delay: "0s" },
+        { top: "top-20", left: "left-[60%]", size: "text-[250px]", delay: "0.5s",},
+        { top: "top-5", left: "left-[35%]", size: "text-[280px]", delay: "1s" },
+      ];
+
+      // Esőcseppek pozíciói a felhők alatt - több csepp folyamatos esőhöz
+      const rainBands = [
+            { minLeft: 10, maxLeft: 25 }, 
+            { minLeft: 60, maxLeft: 75 }, 
+            { minLeft: 35, maxLeft: 50 }, 
+        ];
+
+        // *** DINAMIKUS ESŐ GENERÁLÁSA ***
+        // 40 csepp generálása 1.5s és 2.5s közötti animációs idővel
+        const rainPositions = generateRandomPositions(40, rainBands, 1.5, 2.5);
+
+        console.log(rainPositions);
+
       return (
         <>
-          <span className="absolute top-20 left-1/4 text-8xl opacity-40 animate-bounce">
-            ☁️
-          </span>
-          <span className="absolute top-1/2 right-1/3 text-7xl opacity-30 animate-bounce">
-            ☁️
-          </span>
-          {/* Villám és eső az intenzívebb hatásért */}
+          {/* Esőcseppek animáció - felhőből lefelé esnek (alacsonyabb z-index, hogy a felhők mögött legyenek) */}
+          {rainPositions.map((pos, idx) => (
+            <span
+              key={`rain-${idx}`}
+              className={`absolute top-[250px] ${pos.left} text-4xl opacity-70 rain-drop z-0`}
+              style={{
+                animationDuration: pos.duration,
+                animationDelay: pos.delay,
+              }}
+            >
+              💧
+            </span>
+          ))}
+
+          {/* Nagy felhők (magasabb z-index, hogy előrébb legyenek) */}
+          {clouds.map((cloud, idx) => (
+            <span
+              key={`cloud-${idx}`}
+              className={`absolute ${cloud.top} ${cloud.left} ${cloud.size} opacity-50 z-10`}
+            >
+              ☁️
+            </span>
+          ))}
+
+          {/* Villám */}
           {text.includes("thunder") && (
-            <span className="absolute top-1/3 left-1/2 text-9xl opacity-80 animate-flash">
+            <span className="absolute top-1/3 left-1/2 text-[200px] opacity-80 animate-pulse z-20">
               ⚡
             </span>
           )}
-          <span className="absolute bottom-16 left-1/3 text-5xl opacity-70 animate-pulse">
-            💧
-          </span>
-          <span className="absolute bottom-28 right-1/3 text-5xl opacity-70 animate-pulse">
-            💧
-          </span>
         </>
       );
     }
@@ -147,28 +247,94 @@ export default function Weather() {
       text.includes("sleet") ||
       text.includes("ice")
     ) {
+      // Nagy felhők
+      const clouds = [
+        {
+          top: "-top-20",
+          left: "left-[10%]",
+          size: "text-[200px]",
+          delay: "0s",
+        },
+        {
+          top: "top-10",
+          left: "left-[70%]",
+          size: "text-[250px]",
+          delay: "0.5s",
+        },
+        { top: "top-8", left: "left-[35%]", size: "text-[160px]", delay: "1s" },
+      ];
+
+      // Hó pozíciók a felhők alatt - több hó folyamatos havazáshoz
+      const snowPositions = [
+        // Első felhő alatt
+        { left: "left-[12%]", delay: "0s", duration: "3s" },
+        { left: "left-[12%]", delay: "1.5s", duration: "3s" },
+        { left: "left-[14%]", delay: "0.3s", duration: "3.5s" },
+        { left: "left-[14%]", delay: "1.8s", duration: "3.5s" },
+        { left: "left-[16%]", delay: "0.6s", duration: "3.2s" },
+        { left: "left-[16%]", delay: "2.1s", duration: "3.2s" },
+        { left: "left-[18%]", delay: "0.2s", duration: "3.8s" },
+        { left: "left-[18%]", delay: "1.7s", duration: "3.8s" },
+        { left: "left-[20%]", delay: "0.5s", duration: "3.3s" },
+        { left: "left-[20%]", delay: "2s", duration: "3.3s" },
+        { left: "left-[22%]", delay: "0.8s", duration: "3.6s" },
+        { left: "left-[22%]", delay: "2.3s", duration: "3.6s" },
+        // Második felhő alatt
+        { left: "left-[62%]", delay: "0.4s", duration: "3.1s" },
+        { left: "left-[62%]", delay: "1.9s", duration: "3.1s" },
+        { left: "left-[64%]", delay: "0.7s", duration: "3.4s" },
+        { left: "left-[64%]", delay: "2.2s", duration: "3.4s" },
+        { left: "left-[66%]", delay: "0.1s", duration: "3.7s" },
+        { left: "left-[66%]", delay: "1.6s", duration: "3.7s" },
+        { left: "left-[68%]", delay: "0.9s", duration: "3.2s" },
+        { left: "left-[68%]", delay: "2.4s", duration: "3.2s" },
+        { left: "left-[70%]", delay: "0.5s", duration: "3.5s" },
+        { left: "left-[70%]", delay: "2s", duration: "3.5s" },
+        { left: "left-[72%]", delay: "0.2s", duration: "3.8s" },
+        { left: "left-[72%]", delay: "1.7s", duration: "3.8s" },
+        // Harmadik felhő alatt
+        { left: "left-[37%]", delay: "0.6s", duration: "3.3s" },
+        { left: "left-[37%]", delay: "2.1s", duration: "3.3s" },
+        { left: "left-[39%]", delay: "0.3s", duration: "3.6s" },
+        { left: "left-[39%]", delay: "1.8s", duration: "3.6s" },
+        { left: "left-[41%]", delay: "0.8s", duration: "3.1s" },
+        { left: "left-[41%]", delay: "2.3s", duration: "3.1s" },
+        { left: "left-[43%]", delay: "0.1s", duration: "3.7s" },
+        { left: "left-[43%]", delay: "1.6s", duration: "3.7s" },
+        { left: "left-[45%]", delay: "0.4s", duration: "3.4s" },
+        { left: "left-[45%]", delay: "1.9s", duration: "3.4s" },
+        { left: "left-[47%]", delay: "0.7s", duration: "3.9s" },
+        { left: "left-[47%]", delay: "2.2s", duration: "3.9s" },
+      ];
+
       return (
         <>
-          <span className="absolute top-10 left-20 text-6xl opacity-70 animate-bounce">
-            ❄️
-          </span>
-          <span className="absolute top-14 left-24 text-6xl opacity-70 animate-bounce">
-            ❄️
-          </span>
-          <span className="absolute top-20 left-40 text-6xl opacity-70 animate-bounce">
-            ❄️
-          </span>
-          <span className="absolute top-8 left-24 text-6xl opacity-70 animate-bounce">
-            ❄️
-          </span>
-          <span className="absolute top-40 right-20 text-7xl opacity-60 animate-bounce">
-            ❄️
-          </span>
-          <span className="absolute bottom-20 left-1/3 text-8xl opacity-50 animate-bounce">
-            ❄️
-          </span>
+          {/* Hó animáció - felhőből lefelé esik (alacsonyabb z-index, hogy a felhők mögött legyenek) */}
+          {snowPositions.map((pos, idx) => (
+            <span
+              key={`snow-${idx}`}
+              className={`absolute top-[250px] ${pos.left} text-4xl opacity-80 snow-flake z-0`}
+              style={{
+                animationDuration: pos.duration,
+                animationDelay: pos.delay,
+              }}
+            >
+              ❄️
+            </span>
+          ))}
+
+          {/* Nagy felhők (magasabb z-index, hogy előrébb legyenek) */}
+          {clouds.map((cloud, idx) => (
+            <span
+              key={`cloud-snow-${idx}`}
+              className={`absolute ${cloud.top} ${cloud.left} ${cloud.size} opacity-50 z-10`}
+            >
+              ☁️
+            </span>
+          ))}
+
           {text.includes("sleet") && (
-            <span className="absolute top-1/2 left-1/2 text-5xl opacity-80 animate-pulse">
+            <span className="absolute top-1/2 left-1/2 text-[150px] opacity-60 animate-pulse z-10">
               🌨️
             </span>
           )}
@@ -178,26 +344,24 @@ export default function Weather() {
 
     // 4. FELHŐS
     if (text.includes("cloud") || text.includes("overcast")) {
+      const clouds = [
+        { top: "top-10", left: "left-[5%]", size: "text-[300px]" },
+        { top: "top-20", left: "left-[50%]", size: "text-[280px]" },
+        { top: "top-5", left: "left-[30%]", size: "text-[250px]" },
+        { top: "top-15", left: "left-[70%]", size: "text-[270px]" },
+        { top: "top-25", left: "left-[15%]", size: "text-[240px]" },
+      ];
+
       return (
         <>
-          <span className="absolute top-10 left-10 text-7xl opacity-50 animate-pulse">
-            ☁️
-          </span>
-          <span className="absolute top-1/3 right-1/4 text-8xl opacity-40 animate-pulse">
-            ☁️
-          </span>
-          <span className="absolute bottom-16 left-1/2 text-9xl opacity-30 animate-pulse">
-            ☁️
-          </span>
-          <span className="absolute bottom-10 left-1/4 text-9xl opacity-30 animate-pulse">
-            ☁️
-          </span>
-          <span className="absolute bottom-20 left-1/8 text-9xl opacity-30 animate-pulse">
-            ☁️
-          </span>
-          <span className="absolute bottom-40 left-10 text-9xl opacity-30 animate-pulse">
-            ☁️
-          </span>
+          {clouds.map((cloud, idx) => (
+            <span
+              key={`cloud-only-${idx}`}
+              className={`absolute ${cloud.top} ${cloud.left} ${cloud.size} opacity-40 animate-pulse`}
+            >
+              ☁️
+            </span>
+          ))}
         </>
       );
     }
@@ -269,7 +433,7 @@ export default function Weather() {
             </div>
           </>
         ) : (
-          !error && <p className="text-gray-700">Betöltés...</p>
+          !error && loading && <p className="text-gray-700">Betöltés...</p>
         )}
       </div>
     </div>
