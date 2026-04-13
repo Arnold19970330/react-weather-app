@@ -17,7 +17,7 @@ export const useGeolocation = () => {
           lon: position.coords.longitude,
         });
       },
-      (err) => setError('Nem sikerült meghatározni a helyet. Engedélyezd a helymeghatározást.'),
+      () => setError('Nem sikerült meghatározni a helyet. Engedélyezd a helymeghatározást.'),
     );
   }, []);
 
