@@ -63,7 +63,7 @@ export default function WeatherApp() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-8 mt-12">
+        <div className="mt-12">
           {/* Bal oldal - Fő kártya + Részletek */}
           <div className="lg:col-span-5 space-y-8">
             <CurrentWeatherCard weather={weather} unit={unit} />

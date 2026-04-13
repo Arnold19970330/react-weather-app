@@ -81,14 +81,18 @@ export default function BackgroundEffects({ weather }: BackgroundEffectsProps) {
     // ESŐ / VIHAR
     if (text.includes("rain") || text.includes("drizzle") || text.includes("thunder") || text.includes("showers")) {
       const rainClouds = [
-        { top: "0%", left: "10%", size: "320px" },
-        { top: "8%", left: "55%", size: "260px" },
+        { top: "-3%", left: "4%", size: "360px", duration: "9.5s", delay: "0.2s" },
+        { top: "3%", left: "34%", size: "300px", duration: "11s", delay: "0.8s" },
+        { top: "7%", left: "63%", size: "320px", duration: "10.2s", delay: "0.4s" },
+        { top: "1%", left: "79%", size: "260px", duration: "12.2s", delay: "1.1s" },
       ];
       const rainSpawnZones = [
-        { minLeft: 12, maxLeft: 34, minTop: 18, maxTop: 30 },
-        { minLeft: 57, maxLeft: 79, minTop: 20, maxTop: 32 },
+        { minLeft: 6, maxLeft: 26, minTop: 14, maxTop: 26 },
+        { minLeft: 32, maxLeft: 50, minTop: 16, maxTop: 28 },
+        { minLeft: 58, maxLeft: 74, minTop: 19, maxTop: 31 },
+        { minLeft: 78, maxLeft: 92, minTop: 15, maxTop: 27 },
       ];
-      const rainPositions = generateRandomPositions(45, rainSpawnZones, 1.4, 2.8);
+      const rainPositions = generateRandomPositions(68, rainSpawnZones, 1.4, 2.8);
 
       return (
         <>
@@ -105,8 +109,14 @@ export default function BackgroundEffects({ weather }: BackgroundEffectsProps) {
           {rainClouds.map((cloud, idx) => (
             <span
               key={`cloud-rain-${idx}`}
-              className="absolute opacity-50 z-20"
-              style={{ top: cloud.top, left: cloud.left, fontSize: cloud.size }}
+              className="absolute opacity-50 z-20 cloud-float"
+              style={{
+                top: cloud.top,
+                left: cloud.left,
+                fontSize: cloud.size,
+                animationDuration: cloud.duration,
+                animationDelay: cloud.delay,
+              }}
             >
               ☁️
             </span>
@@ -122,8 +132,10 @@ export default function BackgroundEffects({ weather }: BackgroundEffectsProps) {
     if (text.includes("snow") || text.includes("sleet") || text.includes("ice")) {
       // ... ugyanaz a hó logika, mint korábban
       const snowClouds = [
-        { top: "-4%", left: "10%", size: "280px" },
-        { top: "6%", left: "65%", size: "250px" },
+        { top: "-6%", left: "5%", size: "320px", duration: "13s", delay: "0.1s" },
+        { top: "0%", left: "33%", size: "300px", duration: "11.8s", delay: "0.6s" },
+        { top: "5%", left: "60%", size: "320px", duration: "12.6s", delay: "0.4s" },
+        { top: "2%", left: "79%", size: "270px", duration: "14s", delay: "1.2s" },
       ];
       const snowSpawnZones = [
         { minLeft: 12, maxLeft: 34, minTop: 16, maxTop: 28 },
@@ -146,8 +158,14 @@ export default function BackgroundEffects({ weather }: BackgroundEffectsProps) {
           {snowClouds.map((cloud, idx) => (
             <span
               key={`cloud-snow-${idx}`}
-              className="absolute opacity-55 z-20"
-              style={{ top: cloud.top, left: cloud.left, fontSize: cloud.size }}
+              className="absolute opacity-55 z-20 cloud-float"
+              style={{
+                top: cloud.top,
+                left: cloud.left,
+                fontSize: cloud.size,
+                animationDuration: cloud.duration,
+                animationDelay: cloud.delay,
+              }}
             >
               ☁️
             </span>

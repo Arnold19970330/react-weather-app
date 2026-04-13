@@ -67,7 +67,7 @@ export default function DetailPanel({ weather }: DetailPanelProps) {
         {/* Láthatóság */}
         <div className="bg-slate-900/35 rounded-2xl p-5 hover:bg-slate-800/40 border border-cyan-300/10 transition-colors">
           <span className="text-3xl mb-3 block">👁️</span>
-          <p className="text-3xl font-light text-cyan-100">{current.visibility_km}</p>
+          <p className="text-3xl font-light text-cyan-100">{current.vis_km}</p>
           <p className="text-sm text-cyan-200/75">km – Láthatóság</p>
         </div>
 
@@ -86,17 +86,28 @@ export default function DetailPanel({ weather }: DetailPanelProps) {
           </div>
         </div>
 
-        {/* Pollen Index (fake data – később API-ból is hozható) */}
+        {/* Kiegészítő metrikák */}
         <div className="col-span-2 bg-slate-900/35 rounded-2xl p-5 hover:bg-slate-800/40 border border-cyan-300/10 transition-colors">
-          <div className="flex items-center justify-between">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <span className="text-3xl">🌿</span>
-              <p className="text-lg font-medium mt-2">Pollen szint</p>
+              <span className="text-2xl">🌧️</span>
+              <p className="text-sm text-cyan-200/75 mt-2">Csapadék</p>
+              <p className="text-xl text-emerald-300">{current.precip_mm} mm</p>
             </div>
-            <div className="text-right">
-              <div className="text-4xl font-light text-emerald-400">3.2</div>
-              <p className="text-sm text-emerald-400/80">Közepes</p>
-              <p className="text-xs text-cyan-100/55 mt-1">Parlagfű • Ambrosia</p>
+            <div>
+              <span className="text-2xl">☁️</span>
+              <p className="text-sm text-cyan-200/75 mt-2">Felhőzet</p>
+              <p className="text-xl text-emerald-300">{current.cloud}%</p>
+            </div>
+            <div>
+              <span className="text-2xl">🧊</span>
+              <p className="text-sm text-cyan-200/75 mt-2">Harmatpont</p>
+              <p className="text-xl text-emerald-300">{Math.round(current.dewpoint_c)}°C</p>
+            </div>
+            <div>
+              <span className="text-2xl">🧭</span>
+              <p className="text-sm text-cyan-200/75 mt-2">Szélirány</p>
+              <p className="text-xl text-emerald-300">{current.wind_dir}</p>
             </div>
           </div>
         </div>

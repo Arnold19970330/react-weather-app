@@ -16,6 +16,7 @@ export default function SearchBar({ onSearch, isLoading }: SearchBarProps) {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [shouldAutoOpen, setShouldAutoOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const closeSuggestions = useCallback(() => {
@@ -27,6 +28,7 @@ export default function SearchBar({ onSearch, isLoading }: SearchBarProps) {
     (suggestion: WeatherSearchSuggestion) => {
       const selectedQuery = `${suggestion.name}, ${suggestion.country}`;
       setQuery(selectedQuery);
+      setShouldAutoOpen(false);
       closeSuggestions();
       onSearch(selectedQuery);
     },
@@ -37,6 +39,7 @@ export default function SearchBar({ onSearch, isLoading }: SearchBarProps) {
     e.preventDefault();
     const cleaned = query.trim();
     if (!cleaned) return;
+    setShouldAutoOpen(false);
 
     if (highlightedIndex >= 0 && suggestions[highlightedIndex]) {
       handleSelect(suggestions[highlightedIndex]);
@@ -83,14 +86,14 @@ export default function SearchBar({ onSearch, isLoading }: SearchBarProps) {
   });
 
   useEffect(() => {
-    if (!canSearch) {
+    if (!canSearch || !shouldAutoOpen) {
       closeSuggestions();
       return;
     }
 
     setIsSuggestionsOpen(true);
     setHighlightedIndex(suggestions.length > 0 ? 0 : -1);
-  }, [canSearch, suggestions, closeSuggestions]);
+  }, [canSearch, suggestions, closeSuggestions, shouldAutoOpen]);
 
   useEffect(() => {
     const onDocumentMouseDown = (event: MouseEvent) => {
@@ -109,8 +112,12 @@ export default function SearchBar({ onSearch, isLoading }: SearchBarProps) {
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setShouldAutoOpen(true);
+          }}
           onFocus={() => {
+            setShouldAutoOpen(true);
             if (canSearch) {
               setIsSuggestionsOpen(true);
             }

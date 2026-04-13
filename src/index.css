@@ -50,3 +50,30 @@ html, body, #root {
 .snow-flake {
   animation: snow-fall linear infinite;
 }
+
+@keyframes cloud-float {
+  0% {
+    transform: translateX(0) translateY(0);
+  }
+  50% {
+    transform: translateX(16px) translateY(-8px);
+  }
+  100% {
+    transform: translateX(0) translateY(0);
+  }
+}
+
+.cloud-float {
+  animation: cloud-float ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
